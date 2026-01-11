@@ -1,0 +1,93 @@
+import pandas as pd
+import numpy as np
+import nltk
+import re
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from transformers import BertTokenizer, BertModel
+import torch
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report
+
+# Download NLTK data if not already present
+nltk.download('stopwords', quiet=True)
+nltk.download('wordnet', quiet=True)
+
+# Initialize NLTK components (moved outside the function to avoid re-initialization on each call)
+lemmatizer = WordNetLemmatizer()
+stop_words = set(stopwords.words('english'))
+
+# Define the clean_text function (moved outside the main function for clarity and reusability)
+def clean_text(text):
+    text = text.lower()
+    text = re.sub(r'[^a-z ]', '', text)
+    words = text.split()
+    words = [lemmatizer.lemmatize(w) for w in words if w not in stop_words]
+    return " ".join(words)
+
+# Load pre-trained BERT tokenizer and model (moved outside the function for efficiency)
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+model_bert = BertModel.from_pretrained('bert-base-uncased') # Renamed to avoid conflict with LogisticRegression 'model'
+
+# Define the get_bert_embeddings function (moved outside the main function for clarity and reusability)
+def get_bert_embeddings(text):
+    inputs = tokenizer(text, return_tensors='pt', truncation=True, padding=True, max_length=512)
+    with torch.no_grad():
+        outputs = model_bert(**inputs)
+    return outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
+
+def analyze_personality_data(dataset_path):
+    print(f"Starting analysis for dataset: {dataset_path}")
+
+    # 1. Load the dataset
+    df = pd.read_csv(dataset_path)
+    print("Dataset loaded successfully.")
+    print("First 5 rows of the dataset:")
+    print(df.head())
+
+    # 2. Create a new column clean_text by applying the clean_text function
+    df["clean_text"] = df["text"].apply(clean_text)
+    print("\n'clean_text' column created and text cleaning applied.")
+
+    # 3. Create another new column bert_embeddings
+    df['bert_embeddings'] = df['clean_text'].apply(get_bert_embeddings)
+    print("\n'bert_embeddings' column created and BERT embeddings generated.")
+    print(f"Shape of first BERT embedding: {df['bert_embeddings'].iloc[0].shape}")
+
+    # Convert the list of BERT embeddings to a 2D NumPy array
+    X = np.array(df['bert_embeddings'].tolist())
+    print(f"\nBERT embeddings converted to NumPy array with shape: {X.shape}")
+
+    # Define the five personality traits
+    traits = ["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"]
+
+    # Iterate through each trait, train, and evaluate a Logistic Regression model
+    for trait in traits:
+        print(f"\n--- Training model for {trait} ---")
+        # Set the current trait's column as the target variable y
+        y = df[trait]
+
+        # Split the data into training and testing sets
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
+        )
+
+        # Initialize a Logistic Regression model
+        model = LogisticRegression(max_iter=1000, solver='liblinear')
+
+        # Train the model
+        model.fit(X_train, y_train)
+
+        # Make predictions on the test set
+        y_pred = model.predict(X_test)
+
+        # Report accuracy and classification report
+        print("Accuracy:", accuracy_score(y_test, y_pred))
+        print(classification_report(y_test, y_pred, zero_division=0))
+
+# Example usage block
+if __name__ == '__main__':
+    # Placeholder for the dataset path. Replace with your actual dataset file.
+    dataset_file_path = 'personality_dataset.csv'
+    analyze_personality_data(dataset_file_path)
