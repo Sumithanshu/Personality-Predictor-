@@ -1,0 +1,7 @@
+%%writefile requirements.txt
+pandas
+numpy
+nltk
+scikit-learn
+transformers
+torch
