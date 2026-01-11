@@ -1,0 +1,75 @@
+# Personality Trait Prediction from Text using BERT
+
+This project demonstrates how to predict five major personality traits (Openness, Conscientiousness, Extraversion, Agreeableness, and Neuroticism) from textual data using BERT embeddings and Logistic Regression models. The analysis is encapsulated in a single Python script designed for easy use and sharing.
+
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Dataset](#dataset)
+- [Features and Models](#features-and-models)
+- [Results](#results)
+- [Installation](#installation)
+- [Usage](#usage)
+
+## Project Overview
+
+The goal of this project is to analyze text data to infer an individual's personality traits. It leverages the power of pre-trained BERT models for generating rich, contextualized text embeddings, which are then used as features for Logistic Regression classifiers. This approach aims to provide a more nuanced understanding of personality prediction compared to traditional bag-of-words or TF-IDF methods.
+
+## Dataset
+
+The project uses a synthetic dataset named `personality_dataset.csv`. This dataset contains 500 entries with the following columns:
+- `id`: Unique identifier for each entry.
+- `age`: Age of the individual.
+- `gender`: Gender of the individual (M/F).
+- `text`: Textual data from which personality traits are to be inferred.
+- `openness`: Binary (0 or 1) label for the Openness trait.
+- `conscientiousness`: Binary (0 or 1) label for the Conscientiousness trait.
+- `extraversion`: Binary (0 or 1) label for the Extraversion trait.
+- `agreeableness`: Binary (0 or 1) label for the Agreeableness trait.
+- `neuroticism`: Binary (0 or 1) label for the Neuroticism trait.
+
+The personality traits are represented as binary (0 or 1) classifications.
+
+## Features and Models
+
+1.  Text Cleaning (`clean_text` function):** Text data from the `text` column is preprocessed by converting it to lowercase, removing non-alphabetic characters, lemmatizing words, and removing common English stopwords.
+2.  BERT Embeddings (`get_bert_embeddings` function):** A pre-trained `bert-base-uncased` model and tokenizer are used to convert the cleaned text into 768-dimensional dense vector embeddings. These embeddings capture semantic meaning and contextual relationships in the text.
+3.  Logistic Regression Models:** Separate binary Logistic Regression models are trained for each of the five personality traits. Each model uses the BERT embeddings as input features to predict the corresponding binary trait label.
+
+## Results
+
+The Logistic Regression models were evaluated using accuracy and classification reports for each personality trait. The accuracy scores obtained using BERT embeddings on the `personality_dataset.csv` are:
+
+-   **Openness**: 0.60
+-   **Conscientiousness**: 0.46
+-   **Extraversion**: 0.62
+-   **Agreeableness**: 0.42
+-   **Neuroticism**: 0.56
+
+These results show a notable improvement compared to previous models that used TF-IDF features, indicating that BERT embeddings provide a richer representation of the textual data for this classification task.
+
+## Installation
+
+To run this project, you need Python 3.7+ and the following libraries. You can install them using `pip`:
+
+```bash
+pip install -r requirements.txt
+```
+
+The `requirements.txt` file should contain:
+```
+pandas
+numpy
+nltk
+scikit-learn
+transformers
+torch
+```
+
+Additionally, you need to download NLTK data (stopwords and wordnet). This is handled automatically by the script, but if you encounter issues, you can run:
+
+```python
+import nltk
+nltk.download('stopwords')
+nltk.download('wordnet')
+```
